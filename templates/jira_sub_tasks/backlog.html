@@ -1,0 +1,14 @@
+{% extends "jira_sub_tasks/base.html" %}
+{% block content %}
+    <h1 class="mt-2 mb-3">Features Backlog</h1>
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Below are the list of improvements planned for future sprints ordered by priority.</h5>
+            <ul class="card-text">
+                {% for backlog in backlogs %}
+                    <li>{{ backlog.desc }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+{% endblock content %}

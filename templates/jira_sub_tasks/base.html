@@ -1,0 +1,92 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" href="{% static 'jira_sub_tasks/fav-jsw.png' %}">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.2/css/bootstrap-select.min.css" integrity="sha384-ZavCY/mrwfrTwoTzagp0wAGJB2MmGRcgD/hDlx/e56dfZojuydghe0E3/Bk1VKu9" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.0.0-alpha14/css/tempusdominus-bootstrap-4.min.css" integrity="sha384-Re/I8sla3AIFEoz6DrgkHWaLDSWKXaLOYm5yn3Gwmf/QhWS3/ajG7O2qr1zBmF3d" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="{% static 'jira_sub_tasks/main.css' %}">
+
+    <title>Tele2 JIRA Planner</title>
+</head>
+
+<body>
+    <header class="site-header">
+        <nav class="navbar navbar-expand-md navbar-dark bg-jira fixed-top">
+            <div class="container">
+                <div class="navbar-nav mr-auto pb-1">
+                    <img height="40" src="{% static 'jira_sub_tasks/JIRA_Agile_logo.png' %}">
+                </div>
+                <a class="navbar-brand ml-2 mr-1 pt-0" href="{% url 'jira_sub_tasks_home' %}">Home</a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggle" aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarToggle">
+                    <div class="navbar-nav mr-auto ml-1">
+                        {% for jiraapp in jiraapps %}
+                            {% if jiraapp.team == request.session.team %}
+                                <a class="nav-item nav-link" href="{{ jiraapp.AppHomeUrl }}" target="_blank" data-toggle="tooltip" data-placement="bottom" title="{{ jiraapp.AppHomeTooltip }}">{{ jiraapp.AppName }} Jira</a>
+                                <a class="nav-item nav-link" href="{{ jiraapp.AppDashUrl }}" target="_blank" data-toggle="tooltip" data-placement="bottom" title="{{ jiraapp.AppDashTooltip }}">Dashboard</a>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <!-- Navbar Right Side -->
+                    <div class="navbar-nav">
+                        <a class="nav-item nav-link" href="{% url 'backlog' %}">Backlog</a>
+                        <a class="nav-item nav-link" href="{% url 'privacy' %}">Privacy</a>
+                        <a class="nav-item nav-link" href="{% url 'logout' %}">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <main role="main" class="container">
+        <div class="row">
+            <div class="col-md-8">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                {% block content %}{% endblock %}
+            </div>
+            <div class="col-md-4">
+                <div class="content-section">
+                    <h3>Information</h3>
+                    <ul class="list-group mt-3">
+                        {% for appinfo in appinfos %}
+                            <li class="list-group-item list-group-item-light">{{ appinfo.key }}: <span class="text-info">{{ appinfo.value }}</span></li>
+                        {% endfor %}
+                        <li class="list-group-item list-group-item-light">Developed by: <span class="text-primary">Mukul Debnath </span><a href="mailto:mukul.debnath@cognizant.com?subject=Tele2 JIRA Planner"><i class="fa fa-envelope" aria-hidden="true"></i></a></li>
+                    </ul>
+                    <div class="ml-4 mb-2">
+                        <img class="mt-4" height="40" src="{% static 'jira_sub_tasks/Cognizant_logo.png' %}">
+                        <img class="ml-2 mt-2" height="40" src="{% static 'jira_sub_tasks/Tele2_logo.png' %}">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.2/js/bootstrap-select.min.js" integrity="sha384-xuUB7RiCht6gdWrTGeTHiVRhtXiryS5fNys9jjr4bhj4S0mmw4jICW287qdx15RV" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js" integrity="sha384-fYxN7HsDOBRo1wT/NSZ0LkoNlcXvpDpFy6WzB42LxuKAX7sBwgo7vuins+E1HCaw" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.0.0-alpha14/js/tempusdominus-bootstrap-4.min.js" integrity="sha384-97pmbvZb0qdIXSwrjd4JuG6+4TJhp4eL0totTka0FF1Bf2E42dPiSXsqq09yQxjD" crossorigin="anonymous"></script>
+    <script src="{% static 'jira_sub_tasks/jquery.js' %}"></script>
+</body>
+
+</html>

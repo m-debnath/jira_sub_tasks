@@ -1,0 +1,691 @@
+{% extends "jira_sub_tasks/base.html" %}
+{% load humanize %}
+{% block content %}
+    {% for jiraapp in jiraapps %}
+        {% if jiraapp.team == request.session.team %}
+            {% if sprintName %}
+                <h1 class="mt-2 mb-3">Welcome to {{ jiraapp.AppDesc }} planning for {{ sprintName }}.</h1>
+            {% else %}
+                <h1 class="mt-2 mb-3">Welcome to {{ jiraapp.AppDesc }} planning.</h1>
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Dear {{ userDispName }},</h5>
+            <!--<p class="card-text">You can now automatically create sub-tasks, estimate and assign them, create Definition of Ready and Definiton of Done, change story status to <span class="text-info">Sprint Ready</span> or <span class="text-info">In Sprint</span> etc. </p>-->
+            <p class="card-text">You can now automatically create sub-tasks, estimate and assign them.</p>
+        </div>
+    </div>
+    <div class="content-section mt-3">
+        <form action="{% url 'jira_sub_tasks_home' %}" method="POST">
+            {% csrf_token %}
+            <fieldset class="form-group">
+                <legend class="form-group">Please enter story number<span class="asteriskField">*</span></legend>
+                <div id="div_id_story_number">
+                    {% if story_number %}
+                        <input type="text" name="story_number" id="id_story_number" class="form-control border border-success" value="{{ story_number }}" required>
+                    {% else %}
+                        <input type="text" name="story_number" id="id_story_number" autofocus class="form-control" required>
+                    {% endif %}
+                </div>
+            </fieldset>
+            <div class="form-group">
+                <button class="btn btn-outline-primary" type="submit" value="Get Details">Get Details</button>
+            </div>
+        </form>
+    </div>
+    {% if story is not None %}
+        <form action="{% url 'jira_sub_tasks_home' %}" method="POST">
+            {% csrf_token %}
+            <input type="hidden" id="id_input_story_number" name="input_story_number" value="{{ story_number }}">
+            <div id="div_id_story_details" class="content-section mt-3">
+                <fieldset class="form-group">
+                    <legend>
+                        {% if sprintName == "" %}
+                            <h3><a href="https://agile.corp.tele2.com/browse/{{ story_number }}" target="_blank" class="text-danger" data-toggle="tooltip" data-placement="bottom" title="Go to story.">{{ story.fields.summary }}</a></h3>
+                        {% else %}
+                            <h3><a href="https://agile.corp.tele2.com/browse/{{ story_number }}" target="_blank" class="text-primary" data-toggle="tooltip" data-placement="bottom" title="Go to story.">{{ story.fields.summary }}</a></h3>
+                        {% endif %}
+                    </legend>
+                    {% if story_type == "" %}
+                        <p class="text-danger">Analysis / Implementation / Testing labels are not set in JIRA!<br>Please add appropriate labels in JIRA and try again.</p>
+                    {% endif %}
+                    <div class="row">
+                        <div class="col-md">
+                            <div id="div_id_story_sprint" class="form-group">
+                                <label class="col-form-label">Sprint</label>
+                                <div class="form-check" style="margin-left:-1rem;">
+                                    {% if sprintName %}
+                                        <h4>{{ sprintName }}</h4>
+                                    {% else %}
+                                        <h4 class="text-danger">Not in Sprint</h4>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md">
+                            <div id="div_id_story_release" class="form-group">
+                                <label class="col-form-label">Releasable</label>
+                                <div class="form-check" style="margin-left:-1rem;">
+                                    {% if story.fields.customfield_14627.value == "Yes" %}
+                                        <h4 class="text-success">{{ story.fields.customfield_14627.value }}</h4>
+                                    {% else %}
+                                        <h4 class="text-danger">{{ story.fields.customfield_14627 }}</h4>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md">
+                            <div id="div_id_story_type" class="form-group">
+                                <label class="col-form-label">Story Type</label>
+                                <div class="form-check" style="margin-left:-1rem;">
+                                    {% if story_type == "Development" %}
+                                        <h5 class="text-primary">Development</h5>
+                                    {% elif story_type == "AnalysisDevelopment" %}
+                                        <h5 class="text-primary">Analysis & Development</h5>
+                                    {% elif story_type == "Analysis" %}
+                                        <h5 class="text-primary">Analysis</h5>
+                                    {% elif story_type == "Testing" %}
+                                        <h5 class="text-primary">Testing</h5>
+                                    {% elif story_type == "BugFix" %}
+                                        <h5 class="text-primary">Defect Fix</h5>
+                                    {% elif story_type == "Configuration" %}
+                                        <h5 class="text-primary">Configuration</h5>
+                                    {% elif story_type == "Implementation_Configuration" %}
+                                        <h5 class="text-primary">Development & Configuration</h5>
+                                    {% else %}
+                                        <h5 class="text-danger">NA</h5>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md">
+                            <div id="div_id_story_assign" class="form-group">
+                                <label class="col-form-label">Story will be assigned to</label>
+                                <div class="form-check" style="margin-left:-1rem;">
+                                    {% if story_type == "Development" or story_type == "BugFix" or story_type == "Configuration" or story_type == "Implementation_Configuration" %}
+                                        <h5 class="text-primary">Developer</h5>
+                                    {% elif story_type == "Analysis" or story_type == "AnalysisDevelopment" %}
+                                        <h5 class="text-primary">Analyst</h5>
+                                    {% elif story_type == "Testing" %}
+                                        <h5 class="text-primary">Tester</h5>
+                                    {% else %}
+                                        <h5 class="text-danger">NA</h5>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md">
+                            <div id="div_id_story_status" class="form-group">
+                                <label class="col-form-label">Story Status</label>
+                                <div class="form-check" style="margin-left:-1rem;">
+                                    {% if status == "Groomed" %}
+                                        <h5 class="text-success">{{ status }}</h5>
+                                    {% else %}
+                                        <h5 class="text-danger">{{ status }}</h5>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md">
+                            <div id="div_id_story_points" class="form-group">
+                                <label class="col-form-label">Story Points</label>
+                                <div class="form-check" style="margin-left:-1rem;">
+                                    {% if story.fields.customfield_10002 %}
+                                        <h5 class="text-success">{{ story.fields.customfield_10002|intword }}</h5>
+                                    {% else %}
+                                        <h5 class="text-danger">Not Estimated</h5>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+            <div id="div_id_dev_tasks" class="content-section mt-3" style="display: {{ dev_display }};">
+                <fieldset class="form-group">
+                    {% if story_type == "Implementation_Configuration" %}
+                        <legend>Please create Development and Configuration sub-tasks.</legend>
+                    {% elif story_type == "Configuration" %}
+                        <legend>Please create Configuration sub-tasks.</legend>
+                    {% else %}
+                        <legend>Please create Development sub-tasks.</legend>
+                    {% endif %}
+                    <p class="text-success">The following Sub-Tasks will be created, only if you select a developer.</p>
+                    <div id="div_table_dev_tasks" class="form-group">
+                        <table id="table_dev_tasks" class="table table-striped">
+                            <thead>
+                                <tr class="d-flex">
+                                    <th class="col-6">Summary</th>
+                                    <th class="col-6">Estimate</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for dev_task in dev_tasks %}
+                                    <tr class="d-flex">
+                                        <td class="col-6">{{ dev_task.summary }}</td>
+                                        {% autoescape off %}
+                                        <td class="col-6">{{ dev_task.hoursDesc|linebreaksbr }}</td>
+                                        {% endautoescape %}
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% if request.session.team == "PLAT" %}
+                        <div class="row">
+                            <div class="col-md">
+                                <div id="div_id_dev_assign" class="form-group">
+                                    <label for="id_dev_assign" class="col-form-label requiredField">Select Developer<span class="asteriskField">*</span></label>
+                                    <div class="form-check" style="margin-left:-1.25rem;" data-toggle="tooltip" data-placement="bottom" title="Must fill to create any task.">
+                                        <select title="Not selected" name="dev_assign" id="id_dev_assign" class="form-control selectpicker border border-danger" data-live-search="true" data-max-options="1" multiple>
+                                            {% for user in devusers %}
+                                                <option value="{{ user.key }}">{{ user.displayName }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md">
+                                <div id="div_id_dev_hours" class="form-group">
+                                    <label for="id_dev_hours" class="col-form-label requiredField">Estimate Development Hours<span class="asteriskField">*</span></label>
+                                    <input type="number" min="0" step="1" name="dev_hours" id="id_dev_hours" class="form-control border border-success" data-toggle="tooltip" data-placement="bottom" title="Must fill to create dev tasks.">
+                                </div>
+                            </div>
+                            <div class="col-md">
+                                <div id="div_id_rvw_assign" class="form-group">
+                                    <label for="id_rvw_assign" class="col-form-label">Select Code Reviewer<span class="asteriskField">*</span></label>
+                                    <div class="form-check" style="margin-left:-1.25rem;" data-toggle="tooltip" data-placement="bottom" title="Must fill to create review task.">
+                                        <select title="Not selected" name="rvw_assign" id="id_rvw_assign" class="form-control selectpicker border border-success" data-live-search="true" data-max-options="1" multiple>
+                                            {% for user in devusers %}
+                                                <option value="{{ user.key }}">{{ user.displayName }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md">
+                                <div id="div_id_dev_int_deploy" class="form-group">
+                                    <label for="id_dev_int_deploy" class="col-form-label">INT Deployment Date</label>
+                                    <div class="input-group date" id="id_dev_int_deploy" data-target-input="nearest" data-toggle="tooltip" data-placement="bottom" title="Must be in future.">
+                                        <input type="text" name="dev_int_deploy" class="form-control datetimepicker-input border border-success" data-target="#id_dev_int_deploy">
+                                        <div class="input-group-append" data-target="#id_dev_int_deploy" data-toggle="datetimepicker">
+                                            <div class="input-group-text border border-success"><i class="fa fa-calendar"></i></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md">
+                                {% if story.fields.customfield_14627.value == "Yes" %}
+                                    <div id="div_id_dev_uat_deploy" class="form-group">
+                                        <label for="id_dev_uat_deploy" class="col-form-label">IPT Deployment Date</label>
+                                        <div class="input-group date" id="id_dev_uat_deploy" data-target-input="nearest" data-toggle="tooltip" data-placement="bottom" title="Must be in future.">
+                                            <input type="text" name="dev_uat_deploy" class="form-control datetimepicker-input border border-success" data-target="#id_dev_uat_deploy">
+                                            <div class="input-group-append" data-target="#id_dev_uat_deploy" data-toggle="datetimepicker">
+                                                <div class="input-group-text border border-success"><i class="fa fa-calendar"></i></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% elif request.session.team == "BWB" and story_type == "BugFix" %}
+                        <div class="row">
+                            <div class="col-md">
+                                <div id="div_id_dev_assign" class="form-group">
+                                    <label for="id_dev_assign" class="col-form-label requiredField">Select Developer<span class="asteriskField">*</span></label>
+                                    <div class="form-check" style="margin-left:-1.25rem;" data-toggle="tooltip" data-placement="bottom" title="Must fill to create any task.">
+                                        <select title="Not selected" name="dev_assign" id="id_dev_assign" class="form-control selectpicker border border-danger" data-live-search="true" data-max-options="1" multiple>
+                                            {% for user in devusers %}
+                                                <option value="{{ user.key }}">{{ user.displayName }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md">
+                                <div id="div_id_bug_ana_hours" class="form-group">
+                                    <label for="id_bug_ana_hours" class="col-form-label requiredField">Estimate Root Cause Analysis Hours<span class="asteriskField">*</span></label>
+                                    <input type="number" min="0" step="1" name="bug_ana_hours" id="id_bug_ana_hours" class="form-control border border-success" data-toggle="tooltip" data-placement="bottom" title="Must fill to create task.">
+                                </div>
+                            </div>
+                            <div class="col-md">
+                                <div id="div_id_bug_dev_hours" class="form-group">
+                                    <label for="id_bug_dev_hours" class="col-form-label requiredField">Estimate Defect Fix Hours<span class="asteriskField">*</span></label>
+                                    <input type="number" min="0" step="1" name="bug_dev_hours" id="id_bug_dev_hours" class="form-control border border-success" data-toggle="tooltip" data-placement="bottom" title="Must fill to create all tasks.">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md">
+                                <div id="div_id_bug_test_hours" class="form-group">
+                                    <label for="id_bug_test_hours" class="col-form-label requiredField">Estimate Unit Test Hours<span class="asteriskField">*</span></label>
+                                    <input type="number" min="0" step="1" name="bug_test_hours" id="id_bug_test_hours" class="form-control border border-success" data-toggle="tooltip" data-placement="bottom" title="Must fill to create task.">
+                                </div>
+                            </div>
+                            <div class="col-md">
+                                <div id="div_id_bug_td_hours" class="form-group">
+                                    <label for="id_bug_td_hours" class="col-form-label requiredField">Estimate Technical Documentation Hours<span class="asteriskField">*</span></label>
+                                    <input type="number" min="0" step="1" name="bug_td_hours" id="id_bug_td_hours" class="form-control border border-success" data-toggle="tooltip" data-placement="bottom" title="Must fill to create task.">
+                                </div>
+                            </div>
+                        </div>
+                    {% elif request.session.team == "BWB" and story_type == "Configuration" %}
+                        <div class="row">
+                            <div class="col-md">
+                                <div id="div_id_dev_assign" class="form-group">
+                                    <label for="id_dev_assign" class="col-form-label requiredField">Select Developer<span class="asteriskField">*</span></label>
+                                    <div class="form-check" style="margin-left:-1.25rem;" data-toggle="tooltip" data-placement="bottom" title="Must fill to create any task.">
+                                        <select title="Not selected" name="dev_assign" id="id_dev_assign" class="form-control selectpicker border border-danger" data-live-search="true" data-max-options="1" multiple>
+                                            {% for user in devusers %}
+                                                <option value="{{ user.key }}">{{ user.displayName }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md">
+                                <div id="div_id_con_ques_hours" class="form-group">
+                                    <label for="id_con_ques_hours" class="col-form-label requiredField">Estimate Questionnaire Changes Hours<span class="asteriskField">*</span></label>
+                                    <input type="number" min="0" step="1" name="con_ques_hours" id="id_con_ques_hours" class="form-control border border-success" data-toggle="tooltip" data-placement="bottom" title="Must fill to create task.">
+                                </div>
+                            </div>
+                            <div class="col-md">
+                                <div id="div_id_con_hours" class="form-group">
+                                    <label for="id_con_hours" class="col-form-label requiredField">Estimate Configuration Hours<span class="asteriskField">*</span></label>
+                                    <input type="number" min="0" step="1" name="con_hours" id="id_con_hours" class="form-control border border-success" data-toggle="tooltip" data-placement="bottom" title="Must fill to create task.">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md">
+                                <div id="div_id_con_test_hours" class="form-group">
+                                    <label for="id_con_test_hours" class="col-form-label requiredField">Estimate Unit Testing Hours<span class="asteriskField">*</span></label>
+                                    <input type="number" min="0" step="1" name="con_test_hours" id="id_con_test_hours" class="form-control border border-success" data-toggle="tooltip" data-placement="bottom" title="Must fill to create task.">
+                                </div>
+                            </div>
+                            <div class="col-md">
+                                <div id="div_id_con_td_hours" class="form-group">
+                                    <label for="id_con_td_hours" class="col-form-label requiredField">Estimate Technical Documentation Hours<span class="asteriskField">*</span></label>
+                                    <input type="number" min="0" step="1" name="con_td_hours" id="id_con_td_hours" class="form-control border border-success" data-toggle="tooltip" data-placement="bottom" title="Must fill to create task.">
+                                </div>
+                            </div>
+                        </div>
+                    {% elif request.session.team == "BWB" and story_type == "Development" %}
+                        <div class="row">
+                            <div class="col-md">
+                                <div id="div_id_dev_assign" class="form-group">
+                                    <label for="id_dev_assign" class="col-form-label requiredField">Select Developer<span class="asteriskField">*</span></label>
+                                    <div class="form-check" style="margin-left:-1.25rem;" data-toggle="tooltip" data-placement="bottom" title="Must fill to create any task.">
+                                        <select title="Not selected" name="dev_assign" id="id_dev_assign" class="form-control selectpicker border border-danger" data-live-search="true" data-max-options="1" multiple>
+                                            {% for user in devusers %}
+                                                <option value="{{ user.key }}">{{ user.displayName }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md">
+                                <div id="div_id_dev_ana_hours" class="form-group">
+                                    <label for="id_dev_ana_hours" class="col-form-label requiredField">Estimate Analysis Hours<span class="asteriskField">*</span></label>
+                                    <input type="number" min="0" step="1" name="dev_ana_hours" id="id_dev_ana_hours" class="form-control border border-success" data-toggle="tooltip" data-placement="bottom" title="Must fill to create task.">
+                                </div>
+                            </div>
+                            <div class="col-md">
+                                <div id="div_id_dev_dev_hours" class="form-group">
+                                    <label for="id_dev_dev_hours" class="col-form-label requiredField">Estimate Implementation Hours<span class="asteriskField">*</span></label>
+                                    <input type="number" min="0" step="1" name="dev_dev_hours" id="id_dev_dev_hours" class="form-control border border-success" data-toggle="tooltip" data-placement="bottom" title="Must fill to create task.">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md">
+                                <div id="div_id_dev_test_hours" class="form-group">
+                                    <label for="id_dev_test_hours" class="col-form-label requiredField">Estimate Unit Test Hours<span class="asteriskField">*</span></label>
+                                    <input type="number" min="0" step="1" name="dev_test_hours" id="id_dev_test_hours" class="form-control border border-success" data-toggle="tooltip" data-placement="bottom" title="Must fill to create task.">
+                                </div>
+                            </div>
+                            <div class="col-md">
+                                <div id="div_id_dev_td_hours" class="form-group">
+                                    <label for="id_dev_td_hours" class="col-form-label requiredField">Estimate Technical Documentation Hours<span class="asteriskField">*</span></label>
+                                    <input type="number" min="0" step="1" name="dev_td_hours" id="id_dev_td_hours" class="form-control border border-success" data-toggle="tooltip" data-placement="bottom" title="Must fill to create task.">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md">
+                                <div id="div_id_dev_rvw_assign" class="form-group">
+                                    <label for="id_dev_rvw_assign" class="col-form-label requiredField">Select Code Reviewer<span class="asteriskField">*</span></label>
+                                    <div class="form-check" style="margin-left:-1.25rem;" data-toggle="tooltip" data-placement="bottom" title="Must fill to create task.">
+                                        <select title="Not selected" name="dev_rvw_assign" id="id_dev_rvw_assign" class="form-control selectpicker border border-danger" data-live-search="true" data-max-options="1" multiple>
+                                            {% for user in devusers %}
+                                                <option value="{{ user.key }}">{{ user.displayName }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md">
+                                <div id="div_id_dev_rvw_hours" class="form-group">
+                                    <label for="id_dev_rvw_hours" class="col-form-label requiredField">Estimate Code Review Hours<span class="asteriskField">*</span></label>
+                                    <input type="number" min="0" step="1" name="dev_rvw_hours" id="id_dev_rvw_hours" class="form-control border border-success" data-toggle="tooltip" data-placement="bottom" title="Must fill to create task.">
+                                </div>
+                            </div>
+                        </div>
+                    {% elif request.session.team == "BWB" and story_type == "Implementation_Configuration" %}
+                        <div class="row">
+                            <div class="col-md">
+                                <div id="div_id_dev_assign" class="form-group">
+                                    <label for="id_dev_assign" class="col-form-label requiredField">Select Developer<span class="asteriskField">*</span></label>
+                                    <div class="form-check" style="margin-left:-1.25rem;" data-toggle="tooltip" data-placement="bottom" title="Must fill to create any task.">
+                                        <select title="Not selected" name="dev_assign" id="id_dev_assign" class="form-control selectpicker border border-danger" data-live-search="true" data-max-options="1" multiple>
+                                            {% for user in devusers %}
+                                                <option value="{{ user.key }}">{{ user.displayName }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md">
+                                <div id="div_id_condev_ana_hours" class="form-group">
+                                    <label for="id_condev_ana_hours" class="col-form-label requiredField">Estimate Analysis Hours<span class="asteriskField">*</span></label>
+                                    <input type="number" min="0" step="1" name="condev_ana_hours" id="id_condev_ana_hours" class="form-control border border-success" data-toggle="tooltip" data-placement="bottom" title="Must fill to create task.">
+                                </div>
+                            </div>
+                            <div class="col-md">
+                                <div id="div_id_condev_dev_hours" class="form-group">
+                                    <label for="id_condev_dev_hours" class="col-form-label requiredField">Estimate Implementation Hours<span class="asteriskField">*</span></label>
+                                    <input type="number" min="0" step="1" name="condev_dev_hours" id="id_condev_dev_hours" class="form-control border border-success" data-toggle="tooltip" data-placement="bottom" title="Must fill to create task.">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md">
+                                <div id="div_id_condev_ques_hours" class="form-group">
+                                    <label for="id_condev_ques_hours" class="col-form-label requiredField">Estimate Questionnaire Changes Hours<span class="asteriskField">*</span></label>
+                                    <input type="number" min="0" step="1" name="condev_ques_hours" id="id_condev_ques_hours" class="form-control border border-success" data-toggle="tooltip" data-placement="bottom" title="Must fill to create task.">
+                                </div>
+                            </div>
+                            <div class="col-md">
+                                <div id="div_id_condev_con_hours" class="form-group">
+                                    <label for="id_condev_con_hours" class="col-form-label requiredField">Estimate Configuration Hours<span class="asteriskField">*</span></label>
+                                    <input type="number" min="0" step="1" name="condev_con_hours" id="id_condev_con_hours" class="form-control border border-success" data-toggle="tooltip" data-placement="bottom" title="Must fill to create task.">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md">
+                                <div id="div_id_condev_test_hours" class="form-group">
+                                    <label for="id_condev_test_hours" class="col-form-label requiredField">Estimate Unit Test Hours<span class="asteriskField">*</span></label>
+                                    <input type="number" min="0" step="1" name="condev_test_hours" id="id_condev_test_hours" class="form-control border border-success" data-toggle="tooltip" data-placement="bottom" title="Must fill to create task.">
+                                </div>
+                            </div>
+                            <div class="col-md">
+                                <div id="div_id_condev_td_hours" class="form-group">
+                                    <label for="id_dev_td_hours" class="col-form-label requiredField">Estimate Technical Documentation Hours<span class="asteriskField">*</span></label>
+                                    <input type="number" min="0" step="1" name="condev_td_hours" id="id_condev_td_hours" class="form-control border border-success" data-toggle="tooltip" data-placement="bottom" title="Must fill to create task.">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md">
+                                <div id="div_id_condev_rvw_assign" class="form-group">
+                                    <label for="id_condev_rvw_assign" class="col-form-label requiredField">Select Code Reviewer<span class="asteriskField">*</span></label>
+                                    <div class="form-check" style="margin-left:-1.25rem;" data-toggle="tooltip" data-placement="bottom" title="Must fill to create task.">
+                                        <select title="Not selected" name="condev_rvw_assign" id="id_condev_rvw_assign" class="form-control selectpicker border border-danger" data-live-search="true" data-max-options="1" multiple>
+                                            {% for user in devusers %}
+                                                <option value="{{ user.key }}">{{ user.displayName }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md">
+                                <div id="div_id_condev_rvw_hours" class="form-group">
+                                    <label for="id_condev_rvw_hours" class="col-form-label requiredField">Estimate Code Review Hours<span class="asteriskField">*</span></label>
+                                    <input type="number" min="0" step="1" name="condev_rvw_hours" id="id_condev_rvw_hours" class="form-control border border-success" data-toggle="tooltip" data-placement="bottom" title="Must fill to create task.">
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </fieldset>
+            </div>
+            <div id="div_id_test_tasks" class="content-section mt-3" style="display: {{ test_display }};">
+                <fieldset class="form-group">
+                    <legend>Please create Testing sub-tasks.</legend>
+                    <p class="text-info">The following Sub-Tasks will be created, only if you select a tester.</p>
+                    <div id="div_table_test_tasks" class="form-group">
+                        <table id="table_test_tasks" class="table table-striped">
+                            <thead>
+                                <tr class="d-flex">
+                                    <th class="col-6">Summary</th>
+                                    <th class="col-6">Estimate</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for test_task in test_tasks %}
+                                    <tr class="d-flex">
+                                        <td class="col-6">{{ test_task.summary }}</td>
+                                        {% autoescape off %}
+                                        <td class="col-6">{{ test_task.hoursDesc|linebreaksbr }}</td>
+                                        {% endautoescape %}
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% if request.session.team == "PLAT" %}
+                        <div class="row">
+                            <div class="col-md">
+                                <div id="div_id_test_assign" class="form-group">
+                                    <label for="id_test_assign" class="col-form-label requiredField">Select Tester<span class="asteriskField">*</span></label>
+                                    <div class="form-check" style="margin-left:-1.25rem;" data-toggle="tooltip" data-placement="bottom" title="Must fill to create any task.">
+                                        <select title="Not selected" name="test_assign" id="id_test_assign" class="form-control selectpicker border border-danger" data-live-search="true" data-max-options="1" multiple>
+                                            {% for user in testusers %}
+                                                <option value="{{ user.key }}">{{ user.displayName }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md">
+                                <div id="div_id_test_design_hours" class="form-group">
+                                    <label for="id_test_design_hours" class="col-form-label">Estimate Design Hours</label>
+                                    <input type="number" min="0" step="1" name="test_design_hours" id="id_test_design_hours" class="form-control border border-info" data-toggle="tooltip" data-placement="bottom" title="Fill to override default.">
+                                </div>
+                            </div>
+                            <div class="col-md">
+                                <div id="div_id_test_auto_hours" class="form-group">
+                                    <label for="id_test_auto_hours" class="col-form-label">Estimate Automation Hours</label>
+                                    <input type="number" min="0" step="1" name="test_auto_hours" id="id_test_auto_hours" class="form-control border border-info" data-toggle="tooltip" data-placement="bottom" title="Fill to override default.">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md">
+                                <div id="div_id_int_test_hours" class="form-group">
+                                    <label for="id_int_test_hours" class="col-form-label requiredField">Estimate INT Test Hours<span class="asteriskField">*</span></label>
+                                    <input type="number" min="0" step="1" name="int_test_hours" id="id_int_test_hours" class="form-control border border-info" data-toggle="tooltip" data-placement="bottom" title="Must fill to create task.">
+                                </div>
+                            </div>
+                            <div class="col-md">
+                                {% if story.fields.customfield_14627.value == "Yes" %}
+                                    <div id="div_id_ipt_test_hours" class="form-group">
+                                        <label for="id_ipt_test_hours" class="col-form-label requiredField">Estimate IPT Test Hours<span class="asteriskField">*</span></label>
+                                        <input type="number" min="0" step="1" name="ipt_test_hours" id="id_ipt_test_hours" class="form-control border border-info" data-toggle="tooltip" data-placement="bottom" title="Must fill to create task.">
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% elif request.session.team == "BWB" %}
+                        <div class="row">
+                            <div class="col-md">
+                                <div id="div_id_test_assign" class="form-group">
+                                    <label for="id_test_assign" class="col-form-label requiredField">Select Tester<span class="asteriskField">*</span></label>
+                                    <div class="form-check" style="margin-left:-1.25rem;" data-toggle="tooltip" data-placement="bottom" title="Must fill to create any task.">
+                                        <select title="Not selected" name="test_assign" id="id_test_assign" class="form-control selectpicker border border-danger" data-live-search="true" data-max-options="1" multiple>
+                                            {% for user in testusers %}
+                                                <option value="{{ user.key }}">{{ user.displayName }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md">
+                                <div id="div_id_test_design_hours" class="form-group">
+                                    <label for="id_test_design_hours" class="col-form-label">Estimate Test Preparation Hours</label>
+                                    <input type="number" min="0" step="1" name="test_design_hours" id="id_test_design_hours" class="form-control border border-info" data-toggle="tooltip" data-placement="bottom" title="Must fill to create task.">
+                                </div>
+                            </div>
+                            <div class="col-md">
+                                <div id="div_id_test_exec_hours" class="form-group">
+                                    <label for="id_test_exec_hours" class="col-form-label">Estimate Test Execution Hours</label>
+                                    <input type="number" min="0" step="1" name="test_exec_hours" id="id_test_exec_hours" class="form-control border border-info" data-toggle="tooltip" data-placement="bottom" title="Must fill to create task.">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md">
+                                <div id="div_id_test_reg_hours" class="form-group">
+                                    <label for="id_test_reg_hours" class="col-form-label">Estimate Regression Execution Hours</label>
+                                    <input type="number" min="0" step="1" name="test_reg_hours" id="id_test_reg_hours" class="form-control border border-info" data-toggle="tooltip" data-placement="bottom" title="Must fill to create task.">
+                                </div>
+                            </div>
+                            <div class="col-md">
+                                <div id="div_id_test_demo_hours" class="form-group">
+                                    <label for="id_test_demo_hours" class="col-form-label">Estimate Demo Hours</label>
+                                    <input type="number" min="0" step="1" name="test_demo_hours" id="id_test_demo_hours" class="form-control border border-info" data-toggle="tooltip" data-placement="bottom" title="Must fill to create task.">
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </fieldset>
+            </div>
+            <div id="div_id_ana_tasks" class="content-section mt-3" style="display: {{ ana_display }};">
+                <fieldset class="form-group">
+                    <legend>Please create Analysis sub-tasks.</legend>
+                    <p class="text-info">The following Sub-Tasks will be created, only if you select an analyst.</p>
+                    <div id="div_table_ana_tasks" class="form-group">
+                        <table id="table_ana_tasks" class="table table-striped">
+                            <thead>
+                                <tr class="d-flex">
+                                    <th class="col-6">Summary</th>
+                                    <th class="col-6">Estimate</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ana_task in ana_tasks %}
+                                    <tr class="d-flex">
+                                        <td class="col-6">{{ ana_task.summary }}</td>
+                                        {% autoescape off %}
+                                        <td class="col-6">{{ ana_task.hoursDesc|linebreaksbr }}</td>
+                                        {% endautoescape %}
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="row">
+                        <div class="col-md">
+                            <div id="div_id_ana_assign" class="form-group">
+                                <label for="id_ana_assign" class="col-form-label requiredField">Select Analyst<span class="asteriskField">*</span></label>
+                                <div class="form-check" style="margin-left:-1.25rem;" data-toggle="tooltip" data-placement="bottom" title="Must fill to create any task.">
+                                    <select title="Not selected" name="ana_assign" id="id_ana_assign" class="form-control selectpicker border border-danger" data-live-search="true" data-max-options="1" multiple>
+                                        {% for user in anausers %}
+                                            <option value="{{ user.key }}">{{ user.displayName }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md">
+                            <div id="div_id_ana_hours" class="form-group">
+                                <label for="id_ana_hours" class="col-form-label requiredField">Estimate Analysis Hours<span class="asteriskField">*</span></label>
+                                <input type="number" min="0" step="1" name="ana_hours" id="id_ana_hours" class="form-control border border-info" data-toggle="tooltip" data-placement="bottom" title="Must fill to create any task.">
+                            </div>
+                        </div>
+                    </div>
+                    {% if request.session.team == "PLAT" %}
+                        <div class="row">
+                            <div class="col-md">
+                                <div id="div_id_ana_due_dt" class="form-group">
+                                    <label for="id_ana_due_dt" class="col-form-label">Analysis Due Date</label>
+                                    <div class="input-group date" id="id_ana_due_dt" data-target-input="nearest" data-toggle="tooltip" data-placement="bottom" title="Must be in future.">
+                                        <input type="text" name="ana_due_dt" class="form-control datetimepicker-input border border-info" data-target="#id_ana_due_dt">
+                                        <div class="input-group-append" data-target="#id_ana_due_dt" data-toggle="datetimepicker">
+                                            <div class="input-group-text border border-info"><i class="fa fa-calendar"></i></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md">
+                                <label for="id_ana_int_rvw" class="col-form-label">Is Internal Review needed?</label>
+                                <div class="form-check" style="margin-left:-1.25rem;" data-toggle="tooltip" data-placement="bottom" title="Select yes to create task.">
+                                    <select name="ana_int_rvw" id="id_ana_int_rvw" class="form-control selectpicker border border-info" data-max-options="1">
+                                        <option value="No">No</option>
+                                        <option value="Yes" selected>Yes</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    {% elif request.session.team == "BWB" %}
+                        <div class="row">
+                            <div class="col-md">
+                                <div id="div_id_ana_td_hours" class="form-group">
+                                    <label for="id_ana_td_hours" class="col-form-label requiredField">Estimate Technical Documentation Hours<span class="asteriskField">*</span></label>
+                                    <input type="number" min="0" step="1" name="ana_td_hours" id="id_ana_td_hours" class="form-control border border-info" data-toggle="tooltip" data-placement="bottom" title="Must fill to create task.">
+                                </div>
+                            </div>
+                            <div class="col-md">
+                                <div id="div_id_ana_fd_hours" class="form-group">
+                                    <label for="id_ana_fd_hours" class="col-form-label requiredField">Estimate Functional Documentation Hours<span class="asteriskField">*</span></label>
+                                    <input type="number" min="0" step="1" name="ana_fd_hours" id="id_ana_fd_hours" class="form-control border border-info" data-toggle="tooltip" data-placement="bottom" title="Must fill to create task.">
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </fieldset>
+            </div>
+            {% if story_type != "" %}
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Please read carefully before you proceed.</h5>
+                        <ul class="card-text">
+                            <li>Story will assigned to the person as described above.</li>
+                            <li>Tasks from each section will be created, only if they have primary assignee.</li>
+                            <li>Existing sub-tasks on the Story will remain as is. New sub-tasks will be added to the story.</li>
+                            <li>When done, a new label <span class="text-info">sub_tasks_auto_created</span> will be added to the story.</li>
+                            <li><h6>Please be patient, as task creation can take a while. You can open another tab and continue with other stories.</h6></li>
+                        </ul>
+                        <input class="card-text mt-2" type="checkbox" value="" name="proceed_checkbox" id="id_proceed_checkbox">
+                        <label class="card-text mt-2 ml-1" for="id_proceed_checkbox" id="id_proceed_label">I agree to all of the above.</label>
+                    </div>
+                </div>
+                <div class="form-group mt-3">
+                    <button id="id_btn_proceed" name="btn_proceed" class="btn btn-lg btn-info btn-block" type="submit" value="Proceed" disabled>Proceed</button>
+                </div>
+            {% endif %}
+        </form>
+    {% endif %}
+{% endblock content %}
